@@ -108,7 +108,7 @@ inline void OutputEntireRecordFilledWithNs(FILE * fpOut, RECORD * pRecord, int o
 inline void OutputPartialRecord(FILE * fpOut, RECORD * pRecord, int offset, int len)
 {
 	if(pRecord->com.n > 0){ // fastq
-		if(pRecord->seq.n > 0 ) 
+		if(len > 0 ) 
 			fprintf(fpOut, "@%s%.*s\n+\n%.*s\n", pRecord->id.s, len, pRecord->seq.s + offset, len, pRecord->qual.s + offset);
 		else // fastq empty record
 			fprintf(fpOut, "@%sN\n+\n!\n", pRecord->id.s); 
