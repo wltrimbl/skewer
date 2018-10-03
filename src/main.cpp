@@ -2437,6 +2437,7 @@ void * mt_worker2_mp(void * data)
 						} else{
 							fprintf(fpOut2, "@%s%.*s%.*s\n", pRecord2->id.s, rLen, pRecord2->seq.s, pos2 - rLen, pRecord->seq.s + pos);
 							fprintf(fpOut2, "+\n%.*s%.*s\n", rLen, pRecord2->qual.s, pos2 - rLen, pRecord->qual.s + pos);
+                        }
 					} else{ // empty fastq record
 						fprintf(fpOut2, "@%sN\n+\n!\n", pRecord2->id.s);
 					}
