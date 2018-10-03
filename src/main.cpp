@@ -116,9 +116,9 @@ inline void OutputEntireRecordFilledWithNs(FILE * fpOut, RECORD * pRecord, int o
 		string q2 = string(len2, '!');
 		fprintf(fpOut, "@%s%s%.*s%s\n+\n%s%.*s%s\n", pRecord->id.s, s1.c_str(), len, pRecord->seq.s + offset, s2.c_str(),
 				q1.c_str(), len,  pRecord->qual.s + offset, q2.c_str());
-	}
-	else // fasta
+	} else{ // fasta
 		fprintf(fpOut, ">%s%s%.*s%s\n", pRecord->id.s, s1.c_str(), len, pRecord->seq.s + offset, s2.c_str());
+    }
 }
 
 inline void OutputPartialRecord(FILE * fpOut, RECORD * pRecord, int offset, int len)
@@ -135,6 +135,7 @@ inline void OutputPartialRecord(FILE * fpOut, RECORD * pRecord, int offset, int 
         } else{ // empty fasta record
             fprintf(fpOut, ">%sN\n", pRecord->id.s);
         }
+    }
 }
 
 class cStats
