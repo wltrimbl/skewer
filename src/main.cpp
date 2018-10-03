@@ -57,7 +57,11 @@ inline void OutputTaggedRecord(FILE * fpOut, RECORD * pRecord)
 		}
 	}
 	else{ // fasta
-		fprintf(fpOut, ">%s TAG=%s\n%s\n", strtok(pRecord->id.s, "\n"), TAG_NAME[pRecord->tag], pRecord->seq.s);
+		if(pRecord->seq.n > 0){
+            fprintf(fpOut, ">%s TAG=%s\n%s\n", strtok(pRecord->id.s, "\n"), TAG_NAME[pRecord->tag], pRecord->seq.s);
+        } else{ // empty fasta record
+            fprintf(fpOut, ">%s TAG=%s\nN\n", strtok(pRecord->id.s, "\n"), TAG_NAME[pRecord->tag]);
+        }
 	}
 }
 
@@ -71,23 +75,35 @@ inline void OutputMaskedRecord(FILE * fpOut, RECORD * pRecord, int offset, int l
 		pRecord->seq.s[i] = tolower(pRecord->seq.s[i]);
 	}
 	if(pRecord->com.n > 0){ // fastq
-		if(pRecord->seq.n > 0){ 
+		if(pRecord->seq.n > 0){
 			fprintf(fpOut, "@%s%s\n+\n%s\n", pRecord->id.s, pRecord->seq.s, pRecord->qual.s);
-			} else // empty fastq record
+		} else{ // empty fastq record
 			fprintf(fpOut, "@%sN\n+\n!\n", pRecord->id.s);
-		} else // fasta
-		fprintf(fpOut, ">%s%s\n", pRecord->id.s, pRecord->seq.s);
+        }
+	} else{ // fasta
+        if(pRecord->seq.n > 0){
+		    fprintf(fpOut, ">%s%s\n", pRecord->id.s, pRecord->seq.s);
+        } else{ // empty fasta record
+            fprintf(fpOut, ">%sN\n", pRecord->id.s);
+        }
+    }
 }
 
 inline void OutputEntireRecord(FILE * fpOut, RECORD * pRecord)
 {
-	if(pRecord->com.n > 0) // fastq
-		if(pRecord->seq.n > 0)
+	if(pRecord->com.n > 0){ // fastq
+		if(pRecord->seq.n > 0){
 			fprintf(fpOut, "@%s%s\n+\n%s\n", pRecord->id.s, pRecord->seq.s, pRecord->qual.s);
-		else     // empty fastq record
+        } else{ // empty fastq record
 			fprintf(fpOut, "@%sN\n+\n!\n", pRecord->id.s);
-	else
-		fprintf(fpOut, ">%s%s\n", pRecord->id.s, pRecord->seq.s);
+        }
+	} else{ // fasta
+        if(pRecord->seq.n > 0){
+		    fprintf(fpOut, ">%s%s\n", pRecord->id.s, pRecord->seq.s);
+        } else{ // empty fasta record
+            
+        }fprintf(fpOut, ">%sN\n", pRecord->id.s);
+    }
 }
 
 inline void OutputEntireRecordFilledWithNs(FILE * fpOut, RECORD * pRecord, int offset, int len)
@@ -108,13 +124,17 @@ inline void OutputEntireRecordFilledWithNs(FILE * fpOut, RECORD * pRecord, int o
 inline void OutputPartialRecord(FILE * fpOut, RECORD * pRecord, int offset, int len)
 {
 	if(pRecord->com.n > 0){ // fastq
-		if(len > 0 ) 
+		if(len > 0){
 			fprintf(fpOut, "@%s%.*s\n+\n%.*s\n", pRecord->id.s, len, pRecord->seq.s + offset, len, pRecord->qual.s + offset);
-		else // fastq empty record
-			fprintf(fpOut, "@%sN\n+\n!\n", pRecord->id.s); 
-	} 
-	else //fasta 
-		fprintf(fpOut, ">%s%.*s\n", pRecord->id.s, len, pRecord->seq.s + offset);
+        } else{ // fastq empty record
+			fprintf(fpOut, "@%sN\n+\n!\n", pRecord->id.s);
+        }
+	} else{ // fasta
+        if(len > 0){
+		    fprintf(fpOut, ">%s%.*s\n", pRecord->id.s, len, pRecord->seq.s + offset);
+        } else{ // empty fasta record
+            fprintf(fpOut, ">%sN\n", pRecord->id.s);
+        }
 }
 
 class cStats
@@ -2403,41 +2423,41 @@ void * mt_worker2_mp(void * data)
 					if(pRecord->seq.n > 0) { 
 						if(pos <= rLen){
 							fprintf(fpOut, "@%s%.*s\n+\n%.*s\n", pRecord->id.s, pos, pRecord->seq.s, pos, pRecord->qual.s);
-						}
-						else{
+						} else{
 							fprintf(fpOut, "@%s%.*s%.*s\n", pRecord->id.s, rLen, pRecord->seq.s, pos - rLen, pRecord2->seq.s + pos2);
 							fprintf(fpOut, "+\n%.*s%.*s\n", rLen, pRecord->qual.s, pos - rLen, pRecord2->qual.s + pos2);
 						}
-					} 
-					else{               // empty fastq record
-						fprintf(fpOut, "@%s%.*s\n+\n%.*s\n", pRecord->id.s, pos, "N", pos, "!");
+					} else{ // empty fastq record
+						fprintf(fpOut, "@%sN\n+\n!\n", pRecord->id.s);
 					}
 					if(pRecord2->seq.n > 0){
 						if(pos2 <= rLen){
 							fprintf(fpOut2, "@%s%.*s\n+\n%.*s\n", pRecord2->id.s, pos2, pRecord2->seq.s, pos2, pRecord2->qual.s);
-						}
-						else{
+						} else{
 							fprintf(fpOut2, "@%s%.*s%.*s\n", pRecord2->id.s, rLen, pRecord2->seq.s, pos2 - rLen, pRecord->seq.s + pos);
 							fprintf(fpOut2, "+\n%.*s%.*s\n", rLen, pRecord2->qual.s, pos2 - rLen, pRecord->qual.s + pos);
-						}
-					} 
-					else{               //empty fastq record
-						fprintf(fpOut2, "@%sN\n+\n!\n", pRecord2->id.s  );
+					} else{ // empty fastq record
+						fprintf(fpOut2, "@%sN\n+\n!\n", pRecord2->id.s);
 					}
-				}
-				else{ // fasta
-					if(pos <= rLen){
-						fprintf(fpOut, ">%s%.*s\n", pRecord->id.s, pos, pRecord->seq.s);
-					}
-					else{
-						fprintf(fpOut, ">%s%.*s%.*s\n", pRecord->id.s, rLen, pRecord->seq.s, pos - rLen, pRecord2->seq.s + pos2);
-					}
-					if(pos2 <= rLen){
-						fprintf(fpOut2, ">%s%.*s\n", pRecord2->id.s, pos2, pRecord2->seq.s);
-					}
-					else{
-						fprintf(fpOut2, ">%s%.*s%.*s\n", pRecord2->id.s, rLen, pRecord2->seq.s, pos2 - rLen, pRecord->seq.s + pos);
-					}
+				} else{ // fasta
+                    if(pRecord->seq.n > 0) {
+					    if(pos <= rLen){
+						    fprintf(fpOut, ">%s%.*s\n", pRecord->id.s, pos, pRecord->seq.s);
+					    } else{
+						    fprintf(fpOut, ">%s%.*s%.*s\n", pRecord->id.s, rLen, pRecord->seq.s, pos - rLen, pRecord2->seq.s + pos2);
+					    }
+                    } else{ // empty fasta record
+                        fprintf(fpOut, ">%sN\n", pRecord->id.s);
+                    }
+                    if(pRecord2->seq.n > 0){
+					    if(pos2 <= rLen){
+						    fprintf(fpOut2, ">%s%.*s\n", pRecord2->id.s, pos2, pRecord2->seq.s);
+					    } else{
+						    fprintf(fpOut2, ">%s%.*s%.*s\n", pRecord2->id.s, rLen, pRecord2->seq.s, pos2 - rLen, pRecord->seq.s + pos);
+					    }
+                    } else{ // empty fasta record
+                        fprintf(fpOut, ">%sN\n", pRecord2->id.s);
+                    }
 				}
 				if(bBarcode){
 					if(pRecord->idx.bc < 0){ // assigned
